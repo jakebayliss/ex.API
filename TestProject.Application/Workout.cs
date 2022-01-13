@@ -5,5 +5,7 @@
         public int Id { get; set; }
         public User User { get; set; }
         public List<Exercise> Exercises { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public bool Completed { get; set; }
     }
 }
