@@ -66,7 +66,7 @@ app.MapGet("/user/{id}/workouts", async (int id, DatabaseContext db) =>
 
 app.MapGet("/user/{id}/currentworkouts", async (int id, DatabaseContext db) =>
 {
-    var user = await db.Users.Include(x => x.Workouts).FirstOrDefaultAsync(x => x.Id == id);
+    var user = await db.Users.Include(x => x.Workouts).ThenInclude(x => x.Exercises).FirstOrDefaultAsync(x => x.Id == id);
     if (user != null)
     {
         var workout = user.Workouts.FirstOrDefault(x => !x.Completed);
@@ -74,10 +74,10 @@ app.MapGet("/user/{id}/currentworkouts", async (int id, DatabaseContext db) =>
         {
             return new WorkoutResponse
             {
-                Id = id,
+                Id = workout.Id,
                 Completed = workout.Completed,
                 CreatedDate = workout.CreatedDate,
-                Exercises = workout.Exercises
+                ExerciseCount = workout.Exercises.Count()
             };
         }
     }
@@ -98,6 +98,18 @@ app.MapGet("workouts/{id}/exercises", async (int id, DatabaseContext db) =>
     return null;
 })
 .WithName("GetExercises");
+
+app.MapGet("/workouts/{id}/currentexercises", async (int id, DatabaseContext db) =>
+{
+    var workout = await db.Workouts.Include(x => x.Exercises).FirstOrDefaultAsync(x => x.Id == id);
+    if (workout != null)
+    {
+        return workout.Exercises.Select(x => new ExerciseResponse { Id = x.Id, Name = x.Name, Type = x.Type});
+
+    }
+    return null;
+})
+.WithName("GetWorkoutCurrentExercises");
 
 app.MapPost("workouts/add", async (DatabaseContext db) =>
 {
