@@ -8,4 +8,12 @@
         public DateTime CreatedDate { get; set; }
         public bool Completed { get; set; }
     }
+
+    public class WorkoutResponse
+    {
+        public int Id { get; set; }
+        public List<Exercise> Exercises { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public bool Completed { get; set; }
+    }
 }

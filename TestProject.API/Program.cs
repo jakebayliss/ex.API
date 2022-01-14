@@ -55,11 +55,10 @@ app.MapGet("/workouts/{id}", async (int id, DatabaseContext db) =>
 
 app.MapGet("/user/{id}/workouts", async (int id, DatabaseContext db) =>
 {
-    var user = await db.Users.FindAsync(id);
+    var user = await db.Users.Include(x => x.Workouts).FirstOrDefaultAsync(x => x.Id == id);
     if(user != null)
     {
-        var workouts = await db.Workouts.Where(x => x.User.Id == user.Id).ToListAsync();
-        return workouts;
+        return user.Workouts;
     }
     return null;
 })
@@ -67,11 +66,20 @@ app.MapGet("/user/{id}/workouts", async (int id, DatabaseContext db) =>
 
 app.MapGet("/user/{id}/currentworkouts", async (int id, DatabaseContext db) =>
 {
-    var user = await db.Users.FindAsync(id);
+    var user = await db.Users.Include(x => x.Workouts).FirstOrDefaultAsync(x => x.Id == id);
     if (user != null)
     {
-        var workouts = await db.Workouts.Where(x => x.User.Id == user.Id).ToListAsync();
-        return workouts.Where(x => !x.Completed);
+        var workout = user.Workouts.FirstOrDefault(x => !x.Completed);
+        if(workout != null)
+        {
+            return new WorkoutResponse
+            {
+                Id = id,
+                Completed = workout.Completed,
+                CreatedDate = workout.CreatedDate,
+                Exercises = workout.Exercises
+            };
+        }
     }
     return null;
 })
@@ -93,10 +101,12 @@ app.MapGet("workouts/{id}/exercises", async (int id, DatabaseContext db) =>
 
 app.MapPost("workouts/add", async (DatabaseContext db) =>
 {
+    var user = await db.Users.FirstOrDefaultAsync();
     var newWorkout = new Workout
     {
         Completed = false,
-        CreatedDate = DateTime.Now
+        CreatedDate = DateTime.Now,
+        User = user
     };
     var workout = await db.Workouts.AddAsync(newWorkout);
     await db.SaveChangesAsync();
@@ -104,11 +114,23 @@ app.MapPost("workouts/add", async (DatabaseContext db) =>
 })
 .WithName("AddWorkout");
 
-app.MapPost("exercises/add", async (Exercise ex, DatabaseContext db) =>
+app.MapPost("workouts/{id}/exercises/add", async (int id, Exercise ex, DatabaseContext db) =>
 {
-    var exercise = await db.Exercises.AddAsync(ex);
+    var workout = await db.Workouts.FindAsync(id);
+    var newExercise = new Exercise
+    {
+        Name = ex.Name,
+        Type = ex.Type,
+        Workout = workout
+    };
+    var exercise = await db.Exercises.AddAsync(newExercise);
     await db.SaveChangesAsync();
-    return exercise.Entity;
+    return new ExerciseResponse
+    {
+        Id = exercise.Entity.Id,
+        Name = exercise.Entity.Name,
+        Type = exercise.Entity.Type
+    };
 })
 .WithName("AddExercise");
 
