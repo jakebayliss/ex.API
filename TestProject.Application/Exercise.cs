@@ -10,7 +10,6 @@ namespace TestProject.Application
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public string Type { get; set; }
         public List<Set> Sets { get; set; }
         public Workout Workout { get; set; }
     }
@@ -19,7 +18,6 @@ namespace TestProject.Application
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public string Type { get; set; }
-        public List<Set> Sets { get; set; }
+        public List<SetResponse> Sets { get; set; }
     }
 }
